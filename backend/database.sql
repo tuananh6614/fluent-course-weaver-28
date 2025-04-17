@@ -1,17 +1,3 @@
-CREATE TABLE `certificates` (
-  `id` int(11) NOT NULL,
-  `user_id` int(11) NOT NULL,
-  `course_id` int(11) NOT NULL,
-  `certificate_url` varchar(255) NOT NULL,
-  `issued_at` datetime DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Cấu trúc bảng cho bảng `chapters`
---
-
 CREATE TABLE `chapters` (
   `id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
@@ -32,6 +18,7 @@ CREATE TABLE `courses` (
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `thumbnail` varchar(255) NOT NULL,
+  `status` enum('active','inactive','maintenance') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -171,14 +158,6 @@ CREATE TABLE `user_exam` (
 --
 
 --
--- Chỉ mục cho bảng `certificates`
---
-ALTER TABLE `certificates`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `user_id` (`user_id`,`course_id`),
-  ADD KEY `course_id` (`course_id`);
-
---
 -- Chỉ mục cho bảng `chapters`
 --
 ALTER TABLE `chapters`
@@ -191,6 +170,27 @@ ALTER TABLE `chapters`
 ALTER TABLE `courses`
   ADD PRIMARY KEY (`id`),
   ADD KEY `courses_index_title` (`title`);
+
+--
+-- Chỉ mục cho bảng `documents`
+--
+ALTER TABLE `documents`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `category_id` (`category_id`);
+
+--
+-- Chỉ mục cho bảng `documents_categories`
+--
+ALTER TABLE `documents_categories`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Chỉ mục cho bảng `documents_user`
+--
+ALTER TABLE `documents_user`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `document_id` (`document_id`);
 
 --
 -- Chỉ mục cho bảng `enrollment`
@@ -257,12 +257,6 @@ ALTER TABLE `user_exam`
 --
 
 --
--- AUTO_INCREMENT cho bảng `certificates`
---
-ALTER TABLE `certificates`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT cho bảng `chapters`
 --
 ALTER TABLE `chapters`
@@ -272,6 +266,24 @@ ALTER TABLE `chapters`
 -- AUTO_INCREMENT cho bảng `courses`
 --
 ALTER TABLE `courses`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `documents`
+--
+ALTER TABLE `documents`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `documents_categories`
+--
+ALTER TABLE `documents_categories`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT cho bảng `documents_user`
+--
+ALTER TABLE `documents_user`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -327,17 +339,23 @@ ALTER TABLE `user_exam`
 --
 
 --
--- Các ràng buộc cho bảng `certificates`
---
-ALTER TABLE `certificates`
-  ADD CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `certificates_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
-
---
 -- Các ràng buộc cho bảng `chapters`
 --
 ALTER TABLE `chapters`
   ADD CONSTRAINT `chapters_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+
+--
+-- Các ràng buộc cho bảng `documents`
+--
+ALTER TABLE `documents`
+  ADD CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `documents_categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
+
+--
+-- Các ràng buộc cho bảng `documents_user`
+--
+ALTER TABLE `documents_user`
+  ADD CONSTRAINT `documents_user_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
+  ADD CONSTRAINT `documents_user_ibfk_2` FOREIGN KEY (`document_id`) REFERENCES `documents` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 --
 -- Các ràng buộc cho bảng `enrollment`
@@ -385,3 +403,7 @@ ALTER TABLE `user_exam`
   ADD CONSTRAINT `user_exam_ibfk_1` FOREIGN KEY (`exam_id`) REFERENCES `exams` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
   ADD CONSTRAINT `user_exam_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
