@@ -23,7 +23,7 @@ exports.getProfile = async (req, res, next) => {
 exports.updateProfile = async (req, res, next) => {
   try {
     const { full_name, phone, bio } = req.body;
-    const userId = req.user.user_id;
+    const userId = req.user.id;
     
     if (!full_name) {
       return res.status(400).json({
@@ -34,7 +34,7 @@ exports.updateProfile = async (req, res, next) => {
     
     // Update query with additional fields
     const [result] = await db.query(
-      'UPDATE Users SET full_name = ?, phone = ?, bio = ? WHERE user_id = ?',
+      'UPDATE users SET full_name = ?, phone = ?, bio = ? WHERE id = ?',
       [full_name, phone || null, bio || null, userId]
     );
     
@@ -47,7 +47,7 @@ exports.updateProfile = async (req, res, next) => {
     
     // Get updated user data
     const [updatedUsers] = await db.query(
-      'SELECT user_id, full_name, email, role, phone, bio FROM Users WHERE user_id = ?',
+      'SELECT id, full_name, email, role, phone, bio FROM users WHERE id = ?',
       [userId]
     );
     
@@ -67,7 +67,7 @@ exports.updateProfile = async (req, res, next) => {
 exports.changePassword = async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const userId = req.user.user_id;
+    const userId = req.user.id;
     
     if (!currentPassword || !newPassword) {
       return res.status(400).json({
@@ -78,7 +78,7 @@ exports.changePassword = async (req, res, next) => {
     
     // Get user with password
     const [users] = await db.query(
-      'SELECT * FROM Users WHERE user_id = ?',
+      'SELECT * FROM users WHERE id = ?',
       [userId]
     );
     
@@ -107,7 +107,7 @@ exports.changePassword = async (req, res, next) => {
     
     // Update password
     const [result] = await db.query(
-      'UPDATE Users SET password = ? WHERE user_id = ?',
+      'UPDATE users SET password = ? WHERE id = ?',
       [hashedPassword, userId]
     );
     

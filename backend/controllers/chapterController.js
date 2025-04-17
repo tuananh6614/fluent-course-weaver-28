@@ -10,7 +10,7 @@ exports.getCourseChapters = async (req, res, next) => {
     
     // Check if course exists
     const [courses] = await db.query(
-      'SELECT * FROM Courses WHERE course_id = ?',
+      'SELECT * FROM courses WHERE id = ?',
       [courseId]
     );
     
@@ -23,7 +23,7 @@ exports.getCourseChapters = async (req, res, next) => {
     
     // Get chapters
     const [chapters] = await db.query(
-      'SELECT * FROM Chapters WHERE course_id = ? ORDER BY chapter_order',
+      'SELECT * FROM chapters WHERE course_id = ? ORDER BY chapter_order',
       [courseId]
     );
     
@@ -46,7 +46,7 @@ exports.getChapter = async (req, res, next) => {
     
     // Get chapter details
     const [chapters] = await db.query(
-      'SELECT * FROM Chapters WHERE chapter_id = ?',
+      'SELECT * FROM chapters WHERE id = ?',
       [chapterId]
     );
     
@@ -78,7 +78,7 @@ exports.createChapter = async (req, res, next) => {
     
     // Check if course exists
     const [courses] = await db.query(
-      'SELECT * FROM Courses WHERE course_id = ?',
+      'SELECT * FROM courses WHERE id = ?',
       [courseId]
     );
     
@@ -135,7 +135,7 @@ exports.updateChapter = async (req, res, next) => {
     
     // Check if chapter exists
     const [chapters] = await db.query(
-      'SELECT * FROM Chapters WHERE chapter_id = ?',
+      'SELECT * FROM chapters WHERE id = ?',
       [chapterId]
     );
     
@@ -148,7 +148,7 @@ exports.updateChapter = async (req, res, next) => {
     
     // Update chapter
     const [result] = await db.query(
-      'UPDATE Chapters SET title = ?, description = ?, chapter_order = ? WHERE chapter_id = ?',
+      'UPDATE chapters SET title = ?, description = ?, chapter_order = ? WHERE id = ?',
       [
         title || chapters[0].title,
         description !== undefined ? description : chapters[0].description,
@@ -202,7 +202,7 @@ exports.deleteChapter = async (req, res, next) => {
     
     // Delete chapter
     const [result] = await db.query(
-      'DELETE FROM Chapters WHERE chapter_id = ?',
+      'DELETE FROM chapters WHERE id = ?',
       [chapterId]
     );
     

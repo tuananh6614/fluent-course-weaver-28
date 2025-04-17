@@ -10,7 +10,7 @@ exports.getCourseExams = async (req, res, next) => {
     
     // Check if course exists
     const [courses] = await db.query(
-      'SELECT * FROM Courses WHERE course_id = ?',
+      'SELECT * FROM courses WHERE id = ?',
       [courseId]
     );
     
@@ -23,8 +23,8 @@ exports.getCourseExams = async (req, res, next) => {
     
     // Check if user is enrolled
     const [enrollments] = await db.query(
-      'SELECT * FROM Enrollments WHERE user_id = ? AND course_id = ?',
-      [req.user.user_id, courseId]
+      'SELECT * FROM enrollment WHERE user_id = ? AND course_id = ?',
+      [req.user.id, courseId]
     );
     
     if (enrollments.length === 0 && req.user.role !== 'admin') {
@@ -36,7 +36,7 @@ exports.getCourseExams = async (req, res, next) => {
     
     // Get exams
     const [exams] = await db.query(
-      'SELECT * FROM Exams WHERE course_id = ?',
+      'SELECT * FROM exams WHERE course_id = ?',
       [courseId]
     );
     
@@ -59,7 +59,7 @@ exports.getExam = async (req, res, next) => {
     
     // Get exam details
     const [exams] = await db.query(
-      'SELECT * FROM Exams WHERE exam_id = ?',
+      'SELECT * FROM exams WHERE id = ?',
       [examId]
     );
     
@@ -75,8 +75,8 @@ exports.getExam = async (req, res, next) => {
     // Check if user is enrolled in the course
     if (req.user.role !== 'admin') {
       const [enrollments] = await db.query(
-        'SELECT * FROM Enrollments WHERE user_id = ? AND course_id = ?',
-        [req.user.user_id, exam.course_id]
+        'SELECT * FROM enrollment WHERE user_id = ? AND course_id = ?',
+        [req.user.id, exam.course_id]
       );
       
       if (enrollments.length === 0) {
@@ -90,15 +90,15 @@ exports.getExam = async (req, res, next) => {
     // Get questions without correct answers
     const [questions] = await db.query(
       `SELECT 
-        question_id, 
+        id, 
         question_text, 
         option_a, 
         option_b, 
         option_c, 
         option_d 
-      FROM Questions 
-      WHERE exam_id = ?`,
-      [examId]
+      FROM questions 
+      WHERE chapter_id = ?`,
+      [exam.chapter_id]
     );
     
     // Add questions to exam
@@ -119,7 +119,7 @@ exports.getExam = async (req, res, next) => {
 exports.submitExam = async (req, res, next) => {
   try {
     const examId = req.params.id;
-    const userId = req.user.user_id;
+    const userId = req.user.id;
     const { answers } = req.body;
     
     if (!answers || !Array.isArray(answers)) {
@@ -131,7 +131,7 @@ exports.submitExam = async (req, res, next) => {
     
     // Get exam details
     const [exams] = await db.query(
-      'SELECT * FROM Exams WHERE exam_id = ?',
+      'SELECT * FROM exams WHERE id = ?',
       [examId]
     );
     
@@ -146,7 +146,7 @@ exports.submitExam = async (req, res, next) => {
     
     // Check if user is enrolled in the course
     const [enrollments] = await db.query(
-      'SELECT * FROM Enrollments WHERE user_id = ? AND course_id = ?',
+      'SELECT * FROM enrollment WHERE user_id = ? AND course_id = ?',
       [userId, exam.course_id]
     );
     
@@ -159,8 +159,8 @@ exports.submitExam = async (req, res, next) => {
     
     // Get all questions with correct answers
     const [questions] = await db.query(
-      'SELECT * FROM Questions WHERE exam_id = ?',
-      [examId]
+      'SELECT * FROM questions WHERE chapter_id = ?',
+      [exam.chapter_id]
     );
     
     // Calculate score
@@ -168,7 +168,7 @@ exports.submitExam = async (req, res, next) => {
     const questionMap = {};
     
     questions.forEach(question => {
-      questionMap[question.question_id] = question.correct_answer;
+      questionMap[question.id] = question.correct_answer;
     });
     
     answers.forEach(answer => {
@@ -179,20 +179,37 @@ exports.submitExam = async (req, res, next) => {
     });
     
     const totalQuestions = questions.length;
-    const score = (correctCount / totalQuestions) * 100;
-    const passStatus = score >= exam.passing_score ? 'pass' : 'fail';
+    const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+    const passStatus = score >= 70 ? 'pass' : 'fail'; // Default passing score 70%
     
-    // Save test score
-    const [result] = await db.query(
-      'INSERT INTO Test_Scores (user_id, exam_id, score, status) VALUES (?, ?, ?, ?)',
-      [userId, examId, score, passStatus]
+    // Check if user has previous attempts
+    const [attempts] = await db.query(
+      'SELECT * FROM user_exam WHERE user_id = ? AND exam_id = ?',
+      [userId, examId]
     );
     
-    if (result.affectedRows === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Không thể lưu kết quả bài kiểm tra'
-      });
+    let result;
+    
+    if (attempts.length > 0) {
+      // Update existing record
+      [result] = await db.query(
+        'UPDATE user_exam SET score = ?, attempt_count = attempt_count + 1, status = ?, completed_at = NOW() WHERE user_id = ? AND exam_id = ?',
+        [score, passStatus, userId, examId]
+      );
+    } else {
+      // Create new record
+      [result] = await db.query(
+        'INSERT INTO user_exam (user_id, exam_id, score, attempt_count, status) VALUES (?, ?, ?, ?, ?)',
+        [userId, examId, score, 1, passStatus]
+      );
+    }
+    
+    // Update enrollment progress if exam passed
+    if (passStatus === 'pass') {
+      await db.query(
+        'UPDATE enrollment SET progress_percent = 100 WHERE user_id = ? AND course_id = ?',
+        [userId, exam.course_id]
+      );
     }
     
     res.status(200).json({
@@ -203,8 +220,7 @@ exports.submitExam = async (req, res, next) => {
         score,
         correct_count: correctCount,
         total_questions: totalQuestions,
-        status: passStatus,
-        passing_score: exam.passing_score
+        status: passStatus
       }
     });
   } catch (error) {
@@ -218,11 +234,11 @@ exports.submitExam = async (req, res, next) => {
 exports.createExam = async (req, res, next) => {
   try {
     const courseId = req.params.courseId;
-    const { title, time_limit, passing_score, chapter_id, questions } = req.body;
+    const { title, time_limit, chapter_id, questions } = req.body;
     
     // Check if course exists
     const [courses] = await db.query(
-      'SELECT * FROM Courses WHERE course_id = ?',
+      'SELECT * FROM courses WHERE id = ?',
       [courseId]
     );
     
@@ -236,7 +252,7 @@ exports.createExam = async (req, res, next) => {
     // Check if chapter exists if provided
     if (chapter_id) {
       const [chapters] = await db.query(
-        'SELECT * FROM Chapters WHERE chapter_id = ?',
+        'SELECT * FROM chapters WHERE id = ?',
         [chapter_id]
       );
       
@@ -263,14 +279,13 @@ exports.createExam = async (req, res, next) => {
       
       // Create exam
       const [examResult] = await connection.query(
-        'INSERT INTO Exams (course_id, chapter_id, title, time_limit, total_questions, passing_score) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO exams (course_id, chapter_id, title, time_limit, total_questions) VALUES (?, ?, ?, ?, ?)',
         [
           courseId, 
           chapter_id || null, 
           title, 
           time_limit || 30, 
-          questions?.length || 0, 
-          passing_score || 70
+          questions?.length || 0
         ]
       );
       
@@ -278,24 +293,24 @@ exports.createExam = async (req, res, next) => {
       
       // Add questions if provided
       if (questions && Array.isArray(questions) && questions.length > 0) {
-        const questionValues = questions.map(q => [
-          examId,
-          q.question_text,
-          q.option_a,
-          q.option_b,
-          q.option_c,
-          q.option_d,
-          q.correct_answer
-        ]);
-        
-        await connection.query(
-          'INSERT INTO Questions (exam_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES ?',
-          [questionValues]
-        );
+        for (const q of questions) {
+          await connection.query(
+            'INSERT INTO questions (chapter_id, question_text, option_a, option_b, option_c, option_d, correct_answer) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [
+              chapter_id,
+              q.question_text,
+              q.option_a,
+              q.option_b,
+              q.option_c,
+              q.option_d,
+              q.correct_answer
+            ]
+          );
+        }
         
         // Update total questions
         await connection.query(
-          'UPDATE Exams SET total_questions = ? WHERE exam_id = ?',
+          'UPDATE exams SET total_questions = ? WHERE id = ?',
           [questions.length, examId]
         );
       }
@@ -306,13 +321,12 @@ exports.createExam = async (req, res, next) => {
         success: true,
         message: 'Tạo bài kiểm tra thành công',
         data: {
-          exam_id: examId,
+          id: examId,
           course_id: courseId,
           chapter_id: chapter_id || null,
           title,
           time_limit: time_limit || 30,
-          total_questions: questions?.length || 0,
-          passing_score: passing_score || 70
+          total_questions: questions?.length || 0
         }
       });
       

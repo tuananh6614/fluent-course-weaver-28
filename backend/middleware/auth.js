@@ -25,7 +25,7 @@ exports.protect = async (req, res, next) => {
       const decoded = verifyToken(token);
       
       const [rows] = await db.query(
-        'SELECT user_id, email, full_name, role, is_blocked FROM Users WHERE user_id = ?', 
+        'SELECT id, email, full_name, role, status FROM users WHERE id = ?', 
         [decoded.id]
       );
       
@@ -36,8 +36,8 @@ exports.protect = async (req, res, next) => {
         });
       }
       
-      // Check if user is blocked
-      if (rows[0].is_blocked) {
+      // Check if user is blocked or inactive
+      if (rows[0].status === 'banned' || rows[0].status === 'inactive') {
         return res.status(403).json({
           success: false,
           message: 'Tài khoản đã bị khóa, vui lòng liên hệ quản trị viên'

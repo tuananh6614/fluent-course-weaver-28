@@ -1,7 +1,32 @@
+
+-- phpMyAdmin SQL Dump
+-- version 5.2.0
+-- https://www.phpmyadmin.net/
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Cơ sở dữ liệu: `eduhub`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Cấu trúc bảng cho bảng `chapters`
+--
+
 CREATE TABLE `chapters` (
   `id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
   `chapter_order` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -33,7 +58,8 @@ CREATE TABLE `enrollment` (
   `id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `progress_percent` decimal(5,2) DEFAULT NULL,
+  `progress_percent` decimal(5,2) DEFAULT 0.00,
+  `current_lesson_id` int(11) DEFAULT NULL,
   `status` enum('enrolled','completed','dropped') NOT NULL DEFAULT 'enrolled',
   `enrolled_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -50,8 +76,8 @@ CREATE TABLE `exams` (
   `course_id` int(11) NOT NULL,
   `chapter_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `time_limit` int(11) NOT NULL,
-  `total_questions` int(11) NOT NULL,
+  `time_limit` int(11) NOT NULL DEFAULT 30,
+  `total_questions` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -66,6 +92,7 @@ CREATE TABLE `lessons` (
   `id` int(11) NOT NULL,
   `chapter_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
+  `content` text DEFAULT NULL,
   `lesson_order` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -116,6 +143,8 @@ CREATE TABLE `question_test` (
   `id` int(11) NOT NULL,
   `question_id` int(11) NOT NULL,
   `user_exam_id` int(11) NOT NULL,
+  `selected_option` varchar(1) DEFAULT NULL,
+  `is_correct` tinyint(1) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -130,8 +159,10 @@ CREATE TABLE `users` (
   `full_name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin','user') NOT NULL,
+  `role` enum('admin','user') NOT NULL DEFAULT 'user',
   `status` enum('active','inactive','banned') NOT NULL DEFAULT 'active',
+  `phone` varchar(20) DEFAULT NULL,
+  `bio` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -148,7 +179,9 @@ CREATE TABLE `user_exam` (
   `user_id` int(11) NOT NULL,
   `attempt_count` int(11) DEFAULT 0,
   `score` float DEFAULT NULL,
-  `completed_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `status` enum('pass','fail') DEFAULT NULL,
+  `certificate_number` varchar(50) DEFAULT NULL,
+  `completed_at` timestamp NULL DEFAULT current_timestamp(),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -172,33 +205,14 @@ ALTER TABLE `courses`
   ADD KEY `courses_index_title` (`title`);
 
 --
--- Chỉ mục cho bảng `documents`
---
-ALTER TABLE `documents`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `category_id` (`category_id`);
-
---
--- Chỉ mục cho bảng `documents_categories`
---
-ALTER TABLE `documents_categories`
-  ADD PRIMARY KEY (`id`);
-
---
--- Chỉ mục cho bảng `documents_user`
---
-ALTER TABLE `documents_user`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `document_id` (`document_id`);
-
---
 -- Chỉ mục cho bảng `enrollment`
 --
 ALTER TABLE `enrollment`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_course_unique` (`user_id`,`course_id`),
   ADD KEY `course_id` (`course_id`),
-  ADD KEY `user_id` (`user_id`);
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `current_lesson_id` (`current_lesson_id`);
 
 --
 -- Chỉ mục cho bảng `exams`
@@ -249,6 +263,7 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_exam`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `certificate_number` (`certificate_number`),
   ADD KEY `exam_id` (`exam_id`),
   ADD KEY `user_exam_index_user_id` (`user_id`);
 
@@ -266,24 +281,6 @@ ALTER TABLE `chapters`
 -- AUTO_INCREMENT cho bảng `courses`
 --
 ALTER TABLE `courses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `documents`
---
-ALTER TABLE `documents`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `documents_categories`
---
-ALTER TABLE `documents_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT cho bảng `documents_user`
---
-ALTER TABLE `documents_user`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -345,24 +342,12 @@ ALTER TABLE `chapters`
   ADD CONSTRAINT `chapters_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 --
--- Các ràng buộc cho bảng `documents`
---
-ALTER TABLE `documents`
-  ADD CONSTRAINT `documents_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `documents_categories` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
-
---
--- Các ràng buộc cho bảng `documents_user`
---
-ALTER TABLE `documents_user`
-  ADD CONSTRAINT `documents_user_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  ADD CONSTRAINT `documents_user_ibfk_2` FOREIGN KEY (`document_id`) REFERENCES `documents` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
-
---
 -- Các ràng buộc cho bảng `enrollment`
 --
 ALTER TABLE `enrollment`
   ADD CONSTRAINT `enrollment_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  ADD CONSTRAINT `enrollment_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
+  ADD CONSTRAINT `enrollment_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
+  ADD CONSTRAINT `enrollment_ibfk_3` FOREIGN KEY (`current_lesson_id`) REFERENCES `lessons` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
 
 --
 -- Các ràng buộc cho bảng `exams`

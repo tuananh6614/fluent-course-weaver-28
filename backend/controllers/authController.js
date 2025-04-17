@@ -19,7 +19,7 @@ exports.register = async (req, res, next) => {
     
     // Check if email exists
     const [existingUser] = await db.query(
-      'SELECT * FROM Users WHERE email = ?',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
     
@@ -36,7 +36,7 @@ exports.register = async (req, res, next) => {
     
     // Create user
     const [result] = await db.query(
-      'INSERT INTO Users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO users (full_name, email, password, role) VALUES (?, ?, ?, ?)',
       [full_name, email, hashedPassword, 'user']
     );
     
@@ -72,7 +72,7 @@ exports.login = async (req, res, next) => {
     
     // Check if user exists
     const [users] = await db.query(
-      'SELECT * FROM Users WHERE email = ?',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
     
@@ -112,7 +112,7 @@ exports.login = async (req, res, next) => {
       token,
       expiresAt, 
       user: {
-        user_id: user.user_id,
+        user_id: user.id,
         full_name: user.full_name,
         email: user.email,
         role: user.role
@@ -158,7 +158,7 @@ exports.forgotPassword = async (req, res, next) => {
     
     // Check if user exists
     const [users] = await db.query(
-      'SELECT * FROM Users WHERE email = ?',
+      'SELECT * FROM users WHERE email = ?',
       [email]
     );
     

@@ -7,7 +7,7 @@ const db = require('../config/db');
 exports.getCourses = async (req, res, next) => {
   try {
     const [courses] = await db.query(
-      'SELECT * FROM Courses ORDER BY created_at DESC'
+      'SELECT * FROM courses ORDER BY created_at DESC'
     );
     
     res.status(200).json({
@@ -144,7 +144,7 @@ exports.updateCourse = async (req, res, next) => {
       success: true,
       message: 'Cập nhật khóa học thành công',
       data: {
-        course_id: courseId,
+        id: courseId,
         title: title || courses[0].title,
         description: description !== undefined ? description : courses[0].description,
         thumbnail: thumbnail || courses[0].thumbnail
@@ -177,7 +177,7 @@ exports.deleteCourse = async (req, res, next) => {
     
     // Delete course
     const [result] = await db.query(
-      'DELETE FROM Courses WHERE course_id = ?',
+      'DELETE FROM courses WHERE id = ?',
       [courseId]
     );
     

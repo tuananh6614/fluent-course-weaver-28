@@ -10,7 +10,7 @@ exports.getChapterLessons = async (req, res, next) => {
     
     // Check if chapter exists
     const [chapters] = await db.query(
-      'SELECT * FROM Chapters WHERE chapter_id = ?',
+      'SELECT * FROM chapters WHERE id = ?',
       [chapterId]
     );
     
@@ -23,7 +23,7 @@ exports.getChapterLessons = async (req, res, next) => {
     
     // Get lessons
     const [lessons] = await db.query(
-      'SELECT * FROM Lessons WHERE chapter_id = ? ORDER BY lesson_order',
+      'SELECT * FROM lessons WHERE chapter_id = ? ORDER BY lesson_order',
       [chapterId]
     );
     
@@ -107,7 +107,7 @@ exports.createLesson = async (req, res, next) => {
     
     // Create lesson
     const [result] = await db.query(
-      'INSERT INTO Lessons (chapter_id, title, content, lesson_order) VALUES (?, ?, ?, ?)',
+      'INSERT INTO lessons (chapter_id, title, content, lesson_order) VALUES (?, ?, ?, ?)',
       [chapterId, title, content || '', lesson_order]
     );
     
@@ -211,7 +211,7 @@ exports.deleteLesson = async (req, res, next) => {
     
     // Delete lesson
     const [result] = await db.query(
-      'DELETE FROM Lessons WHERE lesson_id = ?',
+      'DELETE FROM lessons WHERE id = ?',
       [lessonId]
     );
     

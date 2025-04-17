@@ -7,11 +7,11 @@ const db = require('../config/db');
 exports.enrollCourse = async (req, res, next) => {
   try {
     const courseId = req.params.courseId;
-    const userId = req.user.user_id;
+    const userId = req.user.id;
     
     // Check if course exists
     const [courses] = await db.query(
-      'SELECT * FROM Courses WHERE course_id = ?',
+      'SELECT * FROM courses WHERE id = ?',
       [courseId]
     );
     
@@ -129,7 +129,7 @@ exports.updateProgress = async (req, res, next) => {
     
     // Update progress
     const [result] = await db.query(
-      'UPDATE Enrollments SET progress_percent = ?, current_lesson_id = ? WHERE user_id = ? AND course_id = ?',
+      'UPDATE enrollment SET progress_percent = ?, current_lesson_id = ? WHERE user_id = ? AND course_id = ?',
       [
         progress_percent || enrollments[0].progress_percent,
         current_lesson_id || enrollments[0].current_lesson_id,
