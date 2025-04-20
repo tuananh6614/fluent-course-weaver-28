@@ -1,11 +1,16 @@
-
 -- phpMyAdmin SQL Dump
--- version 5.2.0
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
+--
+-- Máy chủ: 127.0.0.1
+-- Thời gian đã tạo: Th4 20, 2025 lúc 04:27 AM
+-- Phiên bản máy phục vụ: 10.4.32-MariaDB
+-- Phiên bản PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -19,6 +24,20 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
+-- Cấu trúc bảng cho bảng `certificates`
+--
+
+CREATE TABLE `certificates` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `certificate_url` varchar(255) NOT NULL,
+  `issued_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Cấu trúc bảng cho bảng `chapters`
 --
 
@@ -26,7 +45,6 @@ CREATE TABLE `chapters` (
   `id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
   `chapter_order` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -43,7 +61,6 @@ CREATE TABLE `courses` (
   `title` varchar(255) NOT NULL,
   `description` text NOT NULL,
   `thumbnail` varchar(255) NOT NULL,
-  `status` enum('active','inactive','maintenance') NOT NULL DEFAULT 'active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -58,8 +75,7 @@ CREATE TABLE `enrollment` (
   `id` int(11) NOT NULL,
   `course_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
-  `progress_percent` decimal(5,2) DEFAULT 0.00,
-  `current_lesson_id` int(11) DEFAULT NULL,
+  `progress_percent` decimal(5,2) DEFAULT NULL,
   `status` enum('enrolled','completed','dropped') NOT NULL DEFAULT 'enrolled',
   `enrolled_date` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -76,8 +92,8 @@ CREATE TABLE `exams` (
   `course_id` int(11) NOT NULL,
   `chapter_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `time_limit` int(11) NOT NULL DEFAULT 30,
-  `total_questions` int(11) NOT NULL DEFAULT 0,
+  `time_limit` int(11) NOT NULL,
+  `total_questions` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -92,7 +108,6 @@ CREATE TABLE `lessons` (
   `id` int(11) NOT NULL,
   `chapter_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
-  `content` text DEFAULT NULL,
   `lesson_order` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -143,8 +158,6 @@ CREATE TABLE `question_test` (
   `id` int(11) NOT NULL,
   `question_id` int(11) NOT NULL,
   `user_exam_id` int(11) NOT NULL,
-  `selected_option` varchar(1) DEFAULT NULL,
-  `is_correct` tinyint(1) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -159,10 +172,8 @@ CREATE TABLE `users` (
   `full_name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('admin','user') NOT NULL DEFAULT 'user',
+  `role` enum('admin','user') NOT NULL,
   `status` enum('active','inactive','banned') NOT NULL DEFAULT 'active',
-  `phone` varchar(20) DEFAULT NULL,
-  `bio` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -179,9 +190,7 @@ CREATE TABLE `user_exam` (
   `user_id` int(11) NOT NULL,
   `attempt_count` int(11) DEFAULT 0,
   `score` float DEFAULT NULL,
-  `status` enum('pass','fail') DEFAULT NULL,
-  `certificate_number` varchar(50) DEFAULT NULL,
-  `completed_at` timestamp NULL DEFAULT current_timestamp(),
+  `completed_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -189,6 +198,14 @@ CREATE TABLE `user_exam` (
 --
 -- Chỉ mục cho các bảng đã đổ
 --
+
+--
+-- Chỉ mục cho bảng `certificates`
+--
+ALTER TABLE `certificates`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_id` (`user_id`,`course_id`),
+  ADD KEY `course_id` (`course_id`);
 
 --
 -- Chỉ mục cho bảng `chapters`
@@ -209,10 +226,8 @@ ALTER TABLE `courses`
 --
 ALTER TABLE `enrollment`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `user_course_unique` (`user_id`,`course_id`),
   ADD KEY `course_id` (`course_id`),
-  ADD KEY `user_id` (`user_id`),
-  ADD KEY `current_lesson_id` (`current_lesson_id`);
+  ADD KEY `user_id` (`user_id`);
 
 --
 -- Chỉ mục cho bảng `exams`
@@ -263,13 +278,18 @@ ALTER TABLE `users`
 --
 ALTER TABLE `user_exam`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `certificate_number` (`certificate_number`),
   ADD KEY `exam_id` (`exam_id`),
   ADD KEY `user_exam_index_user_id` (`user_id`);
 
 --
 -- AUTO_INCREMENT cho các bảng đã đổ
 --
+
+--
+-- AUTO_INCREMENT cho bảng `certificates`
+--
+ALTER TABLE `certificates`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT cho bảng `chapters`
@@ -336,6 +356,13 @@ ALTER TABLE `user_exam`
 --
 
 --
+-- Các ràng buộc cho bảng `certificates`
+--
+ALTER TABLE `certificates`
+  ADD CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `certificates_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
+
+--
 -- Các ràng buộc cho bảng `chapters`
 --
 ALTER TABLE `chapters`
@@ -346,8 +373,7 @@ ALTER TABLE `chapters`
 --
 ALTER TABLE `enrollment`
   ADD CONSTRAINT `enrollment_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  ADD CONSTRAINT `enrollment_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION,
-  ADD CONSTRAINT `enrollment_ibfk_3` FOREIGN KEY (`current_lesson_id`) REFERENCES `lessons` (`id`) ON DELETE SET NULL ON UPDATE NO ACTION;
+  ADD CONSTRAINT `enrollment_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION;
 
 --
 -- Các ràng buộc cho bảng `exams`
