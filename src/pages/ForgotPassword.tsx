@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
@@ -25,6 +26,7 @@ const ForgotPassword: React.FC = () => {
         description: 'Vui lòng kiểm tra email của bạn để được hướng dẫn tiếp theo.'
       });
     } catch (error) {
+      // Error is already handled by API interceptor
       console.error('Error requesting password reset:', error);
     } finally {
       setIsLoading(false);

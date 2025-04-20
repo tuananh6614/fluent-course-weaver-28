@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+// Define the proper type for profile data
 interface ProfileData {
   full_name: string;
   email: string;
@@ -30,44 +32,14 @@ interface ProfileData {
   bio: string;
 }
 
+// Define the proper type for the updateProfile function parameter
 interface UpdateProfileParams {
   full_name: string;
   phone?: string;
   bio?: string;
 }
 
-interface UserProfileResponse {
-  success: boolean;
-  data: {
-    user_id: number;
-    full_name: string;
-    email: string;
-    phone?: string;
-    bio?: string;
-    avatar_url?: string;
-    role?: string;
-    created_at?: string;
-  };
-  message?: string;
-}
-
-interface EnrolledCoursesResponse {
-  success: boolean;
-  data: Array<{
-    enrollment_id: number;
-    course_id: number;
-    course?: {
-      title: string;
-      thumbnail?: string;
-      description?: string;
-    };
-    progress_percent: number;
-    status: string;
-    created_at: string;
-  }>;
-  message?: string;
-}
-
+// Schema for password change form
 const passwordSchema = z.object({
   currentPassword: z.string().min(6, {
     message: "Mật khẩu hiện tại phải có ít nhất 6 ký tự",
@@ -99,6 +71,7 @@ const Profile: React.FC = () => {
     confirmPassword: false,
   });
 
+  // Password change form
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
     defaultValues: {
@@ -108,31 +81,35 @@ const Profile: React.FC = () => {
     },
   });
 
-  const { data: userData, isLoading, error } = useQuery<UserProfileResponse>({
+  // Fetch user profile
+  const { data: userData, isLoading, error } = useQuery({
     queryKey: ['userProfile'],
     queryFn: authService.getProfile,
   });
 
-  const { data: enrolledCoursesData } = useQuery<EnrolledCoursesResponse>({
+  // Fetch enrolled courses
+  const { data: enrolledCoursesData } = useQuery({
     queryKey: ['enrolledCourses'],
     queryFn: courseService.getEnrolledCourses,
-    enabled: !!userData,
+    enabled: !!userData, // Only fetch when user data is available
   });
-
+  
   const enrolledCourses = enrolledCoursesData?.data || [];
 
+  // Update profile mutation with correct types
   const updateProfileMutation = useMutation({
     mutationFn: (data: UpdateProfileParams) => authService.updateProfile(data),
     onSuccess: () => {
       toast.success("Thông tin đã được cập nhật");
     },
-    onError: (error: any) => {
+    onError: (error: any) => { // Use any for now to handle different error shapes
       toast.error("Lỗi cập nhật thông tin", { 
         description: error.response?.data?.message || "Vui lòng thử lại"
       });
     }
   });
 
+  // Change password mutation
   const changePasswordMutation = useMutation({
     mutationFn: (data: { currentPassword: string, newPassword: string }) => 
       authService.changePassword(data),
@@ -147,6 +124,7 @@ const Profile: React.FC = () => {
     }
   });
 
+  // Update form data when user data is loaded
   useEffect(() => {
     if (userData?.data) {
       setFormData({
@@ -158,6 +136,7 @@ const Profile: React.FC = () => {
     }
   }, [userData]);
 
+  // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({
@@ -166,6 +145,7 @@ const Profile: React.FC = () => {
     }));
   };
 
+  // Handle form submission with proper type
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     updateProfileMutation.mutate({
@@ -175,6 +155,7 @@ const Profile: React.FC = () => {
     });
   };
 
+  // Handle password form submission
   const onPasswordSubmit = (data: PasswordFormValues) => {
     changePasswordMutation.mutate({
       currentPassword: data.currentPassword,
@@ -182,6 +163,7 @@ const Profile: React.FC = () => {
     });
   };
 
+  // Toggle password visibility
   const togglePasswordVisibility = (field: 'currentPassword' | 'newPassword' | 'confirmPassword') => {
     setShowPassword(prev => ({
       ...prev,
@@ -189,6 +171,7 @@ const Profile: React.FC = () => {
     }));
   };
 
+  // Handle loading state
   if (isLoading) {
     return (
       <Layout>
@@ -201,6 +184,7 @@ const Profile: React.FC = () => {
     );
   }
 
+  // Handle error state
   if (error) {
     return (
       <Layout>
@@ -214,6 +198,7 @@ const Profile: React.FC = () => {
     );
   }
 
+  // Get user initials for avatar fallback
   const getInitials = () => {
     if (!formData.full_name) return "U";
     return formData.full_name
@@ -229,6 +214,7 @@ const Profile: React.FC = () => {
       <section className="py-12 px-4 md:py-16">
         <div className="page-container">
           <div className="flex flex-col md:flex-row gap-8">
+            {/* Sidebar */}
             <aside className="w-full md:w-1/4">
               <Card>
                 <CardContent className="p-6">
@@ -286,6 +272,7 @@ const Profile: React.FC = () => {
               </Card>
             </aside>
 
+            {/* Main Content */}
             <div className="flex-1">
               <Tabs defaultValue="profile">
                 <TabsList className="mb-8">
@@ -295,6 +282,7 @@ const Profile: React.FC = () => {
                   <TabsTrigger value="certificates">Chứng Chỉ</TabsTrigger>
                 </TabsList>
 
+                {/* Profile Tab */}
                 <TabsContent value="profile">
                   <Card>
                     <CardHeader>
@@ -358,6 +346,7 @@ const Profile: React.FC = () => {
                   </Card>
                 </TabsContent>
 
+                {/* Security Tab */}
                 <TabsContent value="security">
                   <Card>
                     <CardHeader>
@@ -470,6 +459,7 @@ const Profile: React.FC = () => {
                   </Card>
                 </TabsContent>
 
+                {/* Courses Tab */}
                 <TabsContent value="courses">
                   <Card>
                     <CardHeader>
@@ -509,6 +499,7 @@ const Profile: React.FC = () => {
                   </Card>
                 </TabsContent>
 
+                {/* Certificates Tab */}
                 <TabsContent value="certificates">
                   <Card>
                     <CardHeader>

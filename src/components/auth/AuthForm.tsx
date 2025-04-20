@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -14,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EyeIcon, EyeOffIcon, Mail, KeyRound } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { authService } from "@/services/api";
 import { toast } from "sonner";
 
 interface AuthFormProps {
@@ -23,7 +22,6 @@ interface AuthFormProps {
 
 const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
   const navigate = useNavigate();
-  const { login, register: registerUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,10 +35,27 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
 
     try {
       if (type === "login") {
-        const success = await login(email, password);
+        const response = await authService.login(email, password);
+        // Store token in localStorage
+        localStorage.setItem('token', response.token);
         
-        if (success) {
-          // Redirect based on user role (handled by AuthContext)
+        // Store user data (except sensitive info)
+        const userData = {
+          id: response.user.user_id,
+          full_name: response.user.full_name,
+          email: response.user.email,
+          role: response.user.role,
+        };
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        toast.success('Đăng nhập thành công', {
+          description: `Chào mừng ${response.user.full_name} quay trở lại!`,
+        });
+        
+        // Redirect based on user role
+        if (response.user.role === 'admin') {
+          navigate('/admin');
+        } else {
           navigate('/');
         }
       } else {
@@ -51,16 +66,11 @@ const AuthForm: React.FC<AuthFormProps> = ({ type }) => {
           return;
         }
         
-        // Call the register function from AuthContext
-        const success = await registerUser({
-          full_name: name,
-          email,
-          password
+        await authService.register(name, email, password);
+        toast.success('Đăng ký thành công', {
+          description: 'Vui lòng đăng nhập để tiếp tục.',
         });
-        
-        if (success) {
-          navigate('/login');
-        }
+        navigate('/login');
       }
     } catch (error) {
       console.error('Auth error:', error);
