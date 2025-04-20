@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // Base API URL - pointing to your local XAMPP server
 const API_URL = 'http://localhost:5000/api';
@@ -10,7 +11,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout to prevent waiting forever
+  timeout: 30000, // Increased timeout to match api.ts
 });
 
 // Add a request interceptor to add the auth token to requests
@@ -38,6 +39,12 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // If 401 Unauthorized, clear token and redirect to login
       localStorage.removeItem('token');
+      localStorage.removeItem('userData');
+      
+      toast.error('Phiên đăng nhập đã hết hạn', {
+        description: 'Vui lòng đăng nhập lại để tiếp tục'
+      });
+      
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -50,17 +57,20 @@ export const courseService = {
   getAllCourses: async () => {
     try {
       console.log("Fetching all courses...");
-      return await api.get('/courses');
+      const response = await api.get('/courses');
+      console.log("Courses fetched:", response.data);
+      return response.data;
     } catch (error) {
       console.error("Error fetching courses:", error);
-      throw error;
+      return { success: false, count: 0, data: [] };
     }
   },
   
   // Get course by id
   getCourseById: async (id) => {
     try {
-      return await api.get(`/courses/${id}`);
+      const response = await api.get(`/courses/${id}`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching course ${id}:`, error);
       throw error;
@@ -70,7 +80,8 @@ export const courseService = {
   // Get chapter lessons
   getChapterLessons: async (chapterId) => {
     try {
-      return await api.get(`/chapters/${chapterId}/lessons`);
+      const response = await api.get(`/chapters/${chapterId}/lessons`);
+      return response.data;
     } catch (error) {
       console.error(`Error fetching lessons for chapter ${chapterId}:`, error);
       throw error;
@@ -80,7 +91,8 @@ export const courseService = {
   // Enroll in a course
   enrollCourse: async (courseId) => {
     try {
-      return await api.post(`/courses/${courseId}/enroll`);
+      const response = await api.post(`/courses/${courseId}/enroll`);
+      return response.data;
     } catch (error) {
       console.error(`Error enrolling in course ${courseId}:`, error);
       throw error;
@@ -90,9 +102,43 @@ export const courseService = {
   // Get enrolled courses
   getEnrolledCourses: async () => {
     try {
-      return await api.get('/enrollments');
+      const response = await api.get('/enrollments');
+      return response.data;
     } catch (error) {
       console.error("Error fetching enrolled courses:", error);
+      throw error;
+    }
+  },
+  
+  // Create a new course
+  createCourse: async (courseData) => {
+    try {
+      const response = await api.post('/courses', courseData);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating course:", error);
+      throw error;
+    }
+  },
+  
+  // Update course
+  updateCourse: async (courseId, courseData) => {
+    try {
+      const response = await api.put(`/courses/${courseId}`, courseData);
+      return response.data;
+    } catch (error) {
+      console.error(`Error updating course ${courseId}:`, error);
+      throw error;
+    }
+  },
+  
+  // Delete course
+  deleteCourse: async (courseId) => {
+    try {
+      const response = await api.delete(`/courses/${courseId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error deleting course ${courseId}:`, error);
       throw error;
     }
   }
@@ -101,10 +147,11 @@ export const courseService = {
 // Auth Service - Methods for authentication
 export const authService = {
   // Login
-  login: async (credentials) => {
+  login: async (email, password) => {
     try {
-      console.log("Attempting login with:", credentials);
-      return await api.post('/auth/login', credentials);
+      console.log("Attempting login with:", { email, password: '****' });
+      const response = await api.post('/auth/login', { email, password });
+      return response.data;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -115,10 +162,21 @@ export const authService = {
   register: async (userData) => {
     try {
       console.log("Attempting registration with:", userData);
-      // Use the real API endpoint for registration
-      return await api.post('/auth/register', userData);
+      const response = await api.post('/auth/register', userData);
+      return response.data;
     } catch (error) {
       console.error("Register error:", error);
+      throw error;
+    }
+  },
+  
+  // Verify token
+  verifyToken: async () => {
+    try {
+      const response = await api.get('/auth/verify-token');
+      return response.data;
+    } catch (error) {
+      console.error("Token verification error:", error);
       throw error;
     }
   },
@@ -126,7 +184,8 @@ export const authService = {
   // Get user profile
   getProfile: async () => {
     try {
-      return await api.get('/auth/verify-token');
+      const response = await api.get('/auth/profile');
+      return response.data;
     } catch (error) {
       console.error("Get profile error:", error);
       throw error;
@@ -136,7 +195,8 @@ export const authService = {
   // Update profile
   updateProfile: async (profileData) => {
     try {
-      return await api.put('/auth/profile', profileData);
+      const response = await api.put('/auth/profile', profileData);
+      return response.data;
     } catch (error) {
       console.error("Update profile error:", error);
       throw error;
@@ -146,7 +206,8 @@ export const authService = {
   // Change password
   changePassword: async (passwordData) => {
     try {
-      return await api.post('/auth/change-password', passwordData);
+      const response = await api.post('/auth/change-password', passwordData);
+      return response.data;
     } catch (error) {
       console.error("Change password error:", error);
       throw error;
@@ -156,7 +217,8 @@ export const authService = {
   // Forgot password
   forgotPassword: async (email) => {
     try {
-      return await api.post('/auth/forgot-password', { email });
+      const response = await api.post('/auth/forgot-password', { email });
+      return response.data;
     } catch (error) {
       console.error("Forgot password error:", error);
       throw error;

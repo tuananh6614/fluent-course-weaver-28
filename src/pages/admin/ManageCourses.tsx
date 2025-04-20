@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import Layout from '@/components/layout/Layout';
@@ -15,17 +14,22 @@ import { toast } from 'sonner';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 
+interface CourseData {
+  title: string;
+  description: string;
+  thumbnail: string;
+}
+
 const ManageCourses = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newCourse, setNewCourse] = useState({
+  const [newCourse, setNewCourse] = useState<CourseData>({
     title: "",
     description: "",
     thumbnail: ""
   });
   
-  // Fetch courses
   const { 
     data: coursesResponse, 
     isLoading, 
@@ -38,14 +42,8 @@ const ManageCourses = () => {
 
   const courses = coursesResponse?.data || [];
   
-  // Filter courses based on search query
-  const filteredCourses = courses.filter((course) => 
-    course.title?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
-  // Add new course mutation
   const createCourseMutation = useMutation({
-    mutationFn: courseService.createCourse,
+    mutationFn: (courseData: CourseData) => courseService.createCourse(courseData),
     onSuccess: () => {
       toast.success("Thêm khóa học thành công");
       setIsAddDialogOpen(false);
@@ -57,7 +55,6 @@ const ManageCourses = () => {
     }
   });
   
-  // Handle add course form submission
   const handleAddCourse = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCourse.title) {
@@ -67,7 +64,6 @@ const ManageCourses = () => {
     createCourseMutation.mutate(newCourse);
   };
   
-  // Handle opening the add course dialog
   const handleOpenAddDialog = () => {
     setIsAddDialogOpen(true);
   };
@@ -195,7 +191,6 @@ const ManageCourses = () => {
         </div>
       </section>
 
-      {/* Add Course Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>

@@ -61,6 +61,27 @@ export const authService = {
     const response = await api.get('/auth/verify-token');
     return response.data;
   },
+
+  // Added missing auth methods
+  getProfile: async () => {
+    const response = await api.get('/auth/profile');
+    return response.data;
+  },
+  
+  updateProfile: async (profileData: { full_name: string; phone?: string; bio?: string }) => {
+    const response = await api.put('/auth/profile', profileData);
+    return response.data;
+  },
+  
+  changePassword: async (passwordData: { currentPassword: string; newPassword: string }) => {
+    const response = await api.post('/auth/change-password', passwordData);
+    return response.data;
+  },
+  
+  forgotPassword: async (email: string) => {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  },
 };
 
 // Course services
@@ -82,6 +103,12 @@ export const courseService = {
     return response.data;
   },
 
+  // Added missing course methods
+  getChapterLessons: async (chapterId: string | number) => {
+    const response = await api.get(`/chapters/${chapterId}/lessons`);
+    return response.data;
+  },
+
   enrollCourse: async (courseId: string | number) => {
     const response = await api.post(`/courses/${courseId}/enroll`);
     return response.data;
@@ -89,6 +116,21 @@ export const courseService = {
   
   getEnrolledCourses: async () => {
     const response = await api.get('/enrollments');
+    return response.data;
+  },
+
+  createCourse: async (courseData: { title: string; description: string; thumbnail: string }) => {
+    const response = await api.post('/courses', courseData);
+    return response.data;
+  },
+
+  updateCourse: async (courseId: string | number, courseData: any) => {
+    const response = await api.put(`/courses/${courseId}`, courseData);
+    return response.data;
+  },
+
+  deleteCourse: async (courseId: string | number) => {
+    const response = await api.delete(`/courses/${courseId}`);
     return response.data;
   }
 };
