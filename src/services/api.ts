@@ -63,12 +63,14 @@ api.interceptors.response.use(
 // Auth services
 export const authService = {
   login: async (email: string, password: string) => {
+    console.log("Attempting login with:", { email, password });
     const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
   
-  register: async (full_name: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { full_name, email, password });
+  register: async (userData: { full_name: string, email: string, password: string }) => {
+    console.log("Attempting registration with:", userData);
+    const response = await api.post('/auth/register', userData);
     return response.data;
   },
   

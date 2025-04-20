@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       const response = await authService.getProfile();
       
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         setUser(response.data.user);
       } else {
         localStorage.removeItem('token');
@@ -47,8 +47,14 @@ export const AuthProvider = ({ children }) => {
       
       const response = await authService.login({ email, password });
       
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         localStorage.setItem('token', response.data.token);
+        
+        // Store user data in localStorage for persistence
+        if (response.data.user) {
+          localStorage.setItem('userData', JSON.stringify(response.data.user));
+        }
+        
         setUser(response.data.user);
         
         toast.success('Đăng nhập thành công', {
@@ -57,7 +63,12 @@ export const AuthProvider = ({ children }) => {
         
         return true;
       } else {
-        setError(response.data.message || 'Đăng nhập không thành công');
+        setError(response.data?.message || 'Đăng nhập không thành công');
+        
+        toast.error('Đăng nhập thất bại', {
+          description: response.data?.message || 'Đăng nhập không thành công'
+        });
+        
         return false;
       }
     } catch (error) {
@@ -79,28 +90,37 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await authService.register(userData);
+      // Ensure correct format for the userData depending on what backend expects
+      const formattedUserData = {
+        full_name: userData.full_name,
+        email: userData.email, 
+        password: userData.password
+      };
       
-      if (response.data.success) {
+      const response = await authService.register(formattedUserData);
+      
+      if (response.data && response.data.success) {
         toast.success('Đăng ký thành công', {
           description: 'Vui lòng đăng nhập để tiếp tục.'
         });
         return true;
       } else {
-        setError(response.data.message || 'Đăng ký không thành công');
+        const errorMessage = response.data?.message || 'Đăng ký không thành công';
+        setError(errorMessage);
         
         toast.error('Đăng ký thất bại', {
-          description: response.data.message || 'Đăng ký không thành công'
+          description: errorMessage
         });
         
         return false;
       }
     } catch (error) {
       console.error('Register error:', error);
-      setError(error.response?.data?.message || 'Đăng ký không thành công');
+      const errorMessage = error.response?.data?.message || 'Đăng ký không thành công';
+      setError(errorMessage);
       
       toast.error('Đăng ký thất bại', {
-        description: error.response?.data?.message || 'Đăng ký không thành công'
+        description: errorMessage
       });
       
       return false;

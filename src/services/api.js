@@ -10,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 seconds timeout to prevent waiting forever
 });
 
 // Add a request interceptor to add the auth token to requests
@@ -32,6 +33,8 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    console.error('API Error:', error);
+    
     if (error.response && error.response.status === 401) {
       // If 401 Unauthorized, clear token and redirect to login
       localStorage.removeItem('token');
@@ -46,7 +49,7 @@ export const courseService = {
   // Get all courses
   getAllCourses: async () => {
     try {
-      // Instead of mock data, use the actual API
+      console.log("Fetching all courses...");
       return await api.get('/courses');
     } catch (error) {
       console.error("Error fetching courses:", error);
@@ -100,6 +103,7 @@ export const authService = {
   // Login
   login: async (credentials) => {
     try {
+      console.log("Attempting login with:", credentials);
       return await api.post('/auth/login', credentials);
     } catch (error) {
       console.error("Login error:", error);
@@ -110,6 +114,7 @@ export const authService = {
   // Register
   register: async (userData) => {
     try {
+      console.log("Attempting registration with:", userData);
       // Use the real API endpoint for registration
       return await api.post('/auth/register', userData);
     } catch (error) {
@@ -121,7 +126,7 @@ export const authService = {
   // Get user profile
   getProfile: async () => {
     try {
-      return await api.get('/auth/profile');
+      return await api.get('/auth/verify-token');
     } catch (error) {
       console.error("Get profile error:", error);
       throw error;
