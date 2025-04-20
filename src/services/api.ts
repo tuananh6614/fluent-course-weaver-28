@@ -2,8 +2,8 @@
 import axios from 'axios';
 import { toast } from "sonner";
 
-// Base API URL with fallback - try to connect to backend server first, fallback to mock data if needed
-const API_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/api' : '/api';
+// Base API URL - pointing to your local XAMPP server
+const API_URL = 'http://localhost:5000/api';
 
 // Create axios instance with base URL
 const api = axios.create({
@@ -63,37 +63,37 @@ api.interceptors.response.use(
 // Auth services
 export const authService = {
   login: async (email: string, password: string) => {
-    const response = await api.post('/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     return response.data;
   },
   
   register: async (full_name: string, email: string, password: string) => {
-    const response = await api.post('/register', { full_name, email, password });
+    const response = await api.post('/auth/register', { full_name, email, password });
     return response.data;
   },
   
   forgotPassword: async (email: string) => {
-    const response = await api.post('/forgot-password', { email });
+    const response = await api.post('/auth/forgot-password', { email });
     return response.data;
   },
   
   verifyToken: async () => {
-    const response = await api.get('/verify-token');
+    const response = await api.get('/auth/verify-token');
     return response.data;
   },
   
   getProfile: async () => {
-    const response = await api.get('/users/profile');
+    const response = await api.get('/auth/profile');
     return response.data;
   },
 
   updateProfile: async (data: { full_name: string, phone?: string, bio?: string }) => {
-    const response = await api.put('/users/profile', data);
+    const response = await api.put('/auth/profile', data);
     return response.data;
   },
 
   changePassword: async (data: { currentPassword: string, newPassword: string }) => {
-    const response = await api.put('/users/change-password', data);
+    const response = await api.put('/auth/change-password', data);
     return response.data;
   },
 };

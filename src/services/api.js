@@ -1,6 +1,7 @@
 
 import axios from 'axios';
 
+// Base API URL - pointing to your local XAMPP server
 const API_URL = 'http://localhost:5000/api';
 
 // Create a reusable axios instance
@@ -45,60 +46,8 @@ export const courseService = {
   // Get all courses
   getAllCourses: async () => {
     try {
-      // For now, we'll return some mock data as the backend might not be ready
-      // In a real app, you would use: return await api.get('/courses');
-      return {
-        data: [
-          {
-            course_id: 1,
-            title: "Lập Trình JavaScript Cơ Bản",
-            instructor: "Nguyen Van A",
-            thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613",
-            category: "Lập trình",
-            rating: 4.8,
-            students: 1200,
-            duration: "12 giờ",
-            price: 199000,
-            created_at: "2023-01-15"
-          },
-          {
-            course_id: 2,
-            title: "Thiết Kế UX/UI Hiện Đại",
-            instructor: "Tran Thi B",
-            thumbnail: "https://images.unsplash.com/photo-1561070791-2526d30994b5",
-            category: "Thiết kế",
-            rating: 4.6,
-            students: 850,
-            duration: "10 giờ",
-            price: 249000,
-            created_at: "2023-02-20"
-          },
-          {
-            course_id: 3,
-            title: "Marketing Số Cho Người Mới Bắt Đầu",
-            instructor: "Le Van C",
-            thumbnail: "https://images.unsplash.com/photo-1557838923-2985c318be48",
-            category: "Marketing",
-            rating: 4.5,
-            students: 920,
-            duration: "8 giờ",
-            price: 179000,
-            created_at: "2023-03-10"
-          },
-          {
-            course_id: 4,
-            title: "Phát Triển Ứng Dụng Web với React",
-            instructor: "Pham Thi D",
-            thumbnail: "https://images.unsplash.com/photo-1633356122102-3fe601e05bd2",
-            category: "Lập trình",
-            rating: 4.9,
-            students: 1500,
-            duration: "15 giờ",
-            price: 299000,
-            created_at: "2023-04-05"
-          }
-        ]
-      };
+      // Instead of mock data, use the actual API
+      return await api.get('/courses');
     } catch (error) {
       console.error("Error fetching courses:", error);
       throw error;
@@ -108,45 +57,7 @@ export const courseService = {
   // Get course by id
   getCourseById: async (id) => {
     try {
-      // For now, return mock data
-      // In a real app: return await api.get(`/courses/${id}`);
-      return {
-        data: {
-          course_id: Number(id),
-          title: `Khóa học ${id}`,
-          instructor_name: "Giảng viên giỏi",
-          instructor_title: "Chuyên gia lập trình",
-          instructor_avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-          instructor_bio: "Chuyên gia với nhiều năm kinh nghiệm giảng dạy và phát triển phần mềm.",
-          thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613",
-          category: "Lập trình",
-          level: "Trung cấp",
-          rating: 4.8,
-          students: 1200,
-          duration: "12 giờ",
-          price: 199000,
-          description: "Khóa học này sẽ giúp bạn hiểu rõ về các khái niệm cơ bản và nâng cao, giúp bạn xây dựng nền tảng vững chắc.",
-          projects_count: 5,
-          resources_count: 25,
-          chapters: [
-            {
-              chapter_id: 1,
-              title: "Giới thiệu",
-              lessons_count: 3
-            },
-            {
-              chapter_id: 2,
-              title: "Cơ bản",
-              lessons_count: 5
-            },
-            {
-              chapter_id: 3,
-              title: "Nâng cao",
-              lessons_count: 4
-            }
-          ]
-        }
-      };
+      return await api.get(`/courses/${id}`);
     } catch (error) {
       console.error(`Error fetching course ${id}:`, error);
       throw error;
@@ -156,32 +67,7 @@ export const courseService = {
   // Get chapter lessons
   getChapterLessons: async (chapterId) => {
     try {
-      // In a real app: return await api.get(`/chapters/${chapterId}/lessons`);
-      return {
-        data: [
-          {
-            lesson_id: 1,
-            title: "Bài 1: Giới thiệu khái niệm",
-            type: "video",
-            duration: "10:15",
-            preview: true
-          },
-          {
-            lesson_id: 2,
-            title: "Bài 2: Cài đặt môi trường",
-            type: "video",
-            duration: "12:30",
-            preview: false
-          },
-          {
-            lesson_id: 3,
-            title: "Bài 3: Bài tập thực hành",
-            type: "exercise",
-            duration: "20:00",
-            preview: false
-          }
-        ]
-      };
+      return await api.get(`/chapters/${chapterId}/lessons`);
     } catch (error) {
       console.error(`Error fetching lessons for chapter ${chapterId}:`, error);
       throw error;
@@ -191,14 +77,7 @@ export const courseService = {
   // Enroll in a course
   enrollCourse: async (courseId) => {
     try {
-      // In a real app: return await api.post(`/courses/${courseId}/enroll`);
-      return {
-        data: {
-          success: true,
-          message: "Đăng ký khóa học thành công",
-          enrollment_id: 123
-        }
-      };
+      return await api.post(`/courses/${courseId}/enroll`);
     } catch (error) {
       console.error(`Error enrolling in course ${courseId}:`, error);
       throw error;
@@ -208,29 +87,7 @@ export const courseService = {
   // Get enrolled courses
   getEnrolledCourses: async () => {
     try {
-      // In a real app: return await api.get('/enrollments');
-      return {
-        data: [
-          {
-            enrollment_id: 1,
-            course_id: 1,
-            progress_percent: 60,
-            course: {
-              title: "Lập Trình JavaScript Cơ Bản",
-              thumbnail: "https://images.unsplash.com/photo-1593720213428-28a5b9e94613"
-            }
-          },
-          {
-            enrollment_id: 2,
-            course_id: 3,
-            progress_percent: 25,
-            course: {
-              title: "Marketing Số Cho Người Mới Bắt Đầu",
-              thumbnail: "https://images.unsplash.com/photo-1557838923-2985c318be48"
-            }
-          }
-        ]
-      };
+      return await api.get('/enrollments');
     } catch (error) {
       console.error("Error fetching enrolled courses:", error);
       throw error;
@@ -243,18 +100,7 @@ export const authService = {
   // Login
   login: async (credentials) => {
     try {
-      // In a real app: return await api.post('/auth/login', credentials);
-      return {
-        data: {
-          token: "sample-jwt-token",
-          user: {
-            id: 1,
-            email: credentials.email,
-            full_name: "Nguyễn Văn A",
-            role: "user"
-          }
-        }
-      };
+      return await api.post('/auth/login', credentials);
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -264,13 +110,8 @@ export const authService = {
   // Register
   register: async (userData) => {
     try {
-      // In a real app: return await api.post('/auth/register', userData);
-      return {
-        data: {
-          success: true,
-          message: "Đăng ký thành công"
-        }
-      };
+      // Use the real API endpoint for registration
+      return await api.post('/auth/register', userData);
     } catch (error) {
       console.error("Register error:", error);
       throw error;
@@ -280,18 +121,7 @@ export const authService = {
   // Get user profile
   getProfile: async () => {
     try {
-      // In a real app: return await api.get('/auth/profile');
-      return {
-        data: {
-          id: 1,
-          email: "user@example.com",
-          full_name: "Nguyễn Văn A",
-          phone: "0123456789",
-          bio: "Tôi là một người học rất đam mê về công nghệ.",
-          avatar_url: "https://randomuser.me/api/portraits/men/32.jpg",
-          role: "user"
-        }
-      };
+      return await api.get('/auth/profile');
     } catch (error) {
       console.error("Get profile error:", error);
       throw error;
@@ -301,13 +131,7 @@ export const authService = {
   // Update profile
   updateProfile: async (profileData) => {
     try {
-      // In a real app: return await api.put('/auth/profile', profileData);
-      return {
-        data: {
-          success: true,
-          message: "Cập nhật thông tin thành công"
-        }
-      };
+      return await api.put('/auth/profile', profileData);
     } catch (error) {
       console.error("Update profile error:", error);
       throw error;
@@ -317,13 +141,7 @@ export const authService = {
   // Change password
   changePassword: async (passwordData) => {
     try {
-      // In a real app: return await api.post('/auth/change-password', passwordData);
-      return {
-        data: {
-          success: true,
-          message: "Thay đổi mật khẩu thành công"
-        }
-      };
+      return await api.post('/auth/change-password', passwordData);
     } catch (error) {
       console.error("Change password error:", error);
       throw error;
@@ -333,13 +151,7 @@ export const authService = {
   // Forgot password
   forgotPassword: async (email) => {
     try {
-      // In a real app: return await api.post('/auth/forgot-password', { email });
-      return {
-        data: {
-          success: true,
-          message: "Email đặt lại mật khẩu đã được gửi"
-        }
-      };
+      return await api.post('/auth/forgot-password', { email });
     } catch (error) {
       console.error("Forgot password error:", error);
       throw error;

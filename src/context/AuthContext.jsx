@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import { authService } from '../services/api';
+import { toast } from 'sonner';
 
 export const AuthContext = createContext();
 
@@ -22,11 +23,7 @@ export const AuthProvider = ({ children }) => {
   const verifyToken = async (token) => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/auth/verify-token', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await authService.getProfile();
       
       if (response.data.success) {
         setUser(response.data.user);
@@ -48,14 +45,16 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password
-      });
+      const response = await authService.login({ email, password });
       
       if (response.data.success) {
         localStorage.setItem('token', response.data.token);
         setUser(response.data.user);
+        
+        toast.success('Đăng nhập thành công', {
+          description: `Chào mừng ${response.data.user.full_name} quay trở lại!`
+        });
+        
         return true;
       } else {
         setError(response.data.message || 'Đăng nhập không thành công');
@@ -64,6 +63,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Login error:', error);
       setError(error.response?.data?.message || 'Đăng nhập không thành công');
+      
+      toast.error('Đăng nhập thất bại', {
+        description: error.response?.data?.message || 'Đăng nhập không thành công'
+      });
+      
       return false;
     } finally {
       setLoading(false);
@@ -75,17 +79,30 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await axios.post('http://localhost:5000/api/auth/register', userData);
+      const response = await authService.register(userData);
       
       if (response.data.success) {
+        toast.success('Đăng ký thành công', {
+          description: 'Vui lòng đăng nhập để tiếp tục.'
+        });
         return true;
       } else {
         setError(response.data.message || 'Đăng ký không thành công');
+        
+        toast.error('Đăng ký thất bại', {
+          description: response.data.message || 'Đăng ký không thành công'
+        });
+        
         return false;
       }
     } catch (error) {
       console.error('Register error:', error);
       setError(error.response?.data?.message || 'Đăng ký không thành công');
+      
+      toast.error('Đăng ký thất bại', {
+        description: error.response?.data?.message || 'Đăng ký không thành công'
+      });
+      
       return false;
     } finally {
       setLoading(false);
@@ -94,7 +111,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userData');
     setUser(null);
+    
+    toast.success('Đăng xuất thành công', {
+      description: 'Bạn đã đăng xuất khỏi hệ thống'
+    });
   };
 
   return (
