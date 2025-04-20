@@ -14,26 +14,29 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      verifyToken(token);
+      verifyToken();
     } else {
       setLoading(false);
     }
   }, []);
 
-  const verifyToken = async (token) => {
+  const verifyToken = async () => {
     try {
       setLoading(true);
-      const response = await authService.getProfile();
+      const response = await authService.verifyToken();
       
-      if (response.data && response.data.success) {
-        setUser(response.data.user);
+      if (response.success) {
+        setUser(response.user);
+        localStorage.setItem('userData', JSON.stringify(response.user));
       } else {
         localStorage.removeItem('token');
+        localStorage.removeItem('userData');
         setUser(null);
       }
     } catch (error) {
       console.error('Auth error:', error);
       localStorage.removeItem('token');
+      localStorage.removeItem('userData');
       setUser(null);
     } finally {
       setLoading(false);
@@ -45,38 +48,28 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = await authService.login({ email, password });
+      const response = await authService.login(email, password);
       
-      if (response.data && response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        
-        // Store user data in localStorage for persistence
-        if (response.data.user) {
-          localStorage.setItem('userData', JSON.stringify(response.data.user));
-        }
-        
-        setUser(response.data.user);
+      if (response.success) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
+        setUser(response.user);
         
         toast.success('Đăng nhập thành công', {
-          description: `Chào mừng ${response.data.user.full_name} quay trở lại!`
+          description: `Chào mừng ${response.user.full_name} quay trở lại!`
         });
         
         return true;
       } else {
-        setError(response.data?.message || 'Đăng nhập không thành công');
-        
-        toast.error('Đăng nhập thất bại', {
-          description: response.data?.message || 'Đăng nhập không thành công'
-        });
-        
-        return false;
+        throw new Error(response.message || 'Đăng nhập không thành công');
       }
     } catch (error) {
       console.error('Login error:', error);
-      setError(error.response?.data?.message || 'Đăng nhập không thành công');
+      const errorMessage = error.response?.data?.message || error.message || 'Đăng nhập không thành công';
+      setError(errorMessage);
       
       toast.error('Đăng nhập thất bại', {
-        description: error.response?.data?.message || 'Đăng nhập không thành công'
+        description: errorMessage
       });
       
       return false;
@@ -90,33 +83,19 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Ensure correct format for the userData depending on what backend expects
-      const formattedUserData = {
-        full_name: userData.full_name,
-        email: userData.email, 
-        password: userData.password
-      };
+      const response = await authService.register(userData);
       
-      const response = await authService.register(formattedUserData);
-      
-      if (response.data && response.data.success) {
+      if (response.success) {
         toast.success('Đăng ký thành công', {
           description: 'Vui lòng đăng nhập để tiếp tục.'
         });
         return true;
       } else {
-        const errorMessage = response.data?.message || 'Đăng ký không thành công';
-        setError(errorMessage);
-        
-        toast.error('Đăng ký thất bại', {
-          description: errorMessage
-        });
-        
-        return false;
+        throw new Error(response.message || 'Đăng ký không thành công');
       }
     } catch (error) {
       console.error('Register error:', error);
-      const errorMessage = error.response?.data?.message || 'Đăng ký không thành công';
+      const errorMessage = error.response?.data?.message || error.message || 'Đăng ký không thành công';
       setError(errorMessage);
       
       toast.error('Đăng ký thất bại', {
